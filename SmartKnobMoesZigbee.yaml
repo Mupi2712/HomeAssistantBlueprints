@@ -79,7 +79,7 @@ action:
           target: !input 'light'
           data_template:
             brightness_step_pct: -5
-            transition: 0.5
+            transition: 0.1
   - conditions:
     - '{{ command == ''step_color_temp'' }}'
     - '{{ cluster_id == 768 }}'
@@ -94,7 +94,7 @@ action:
           target: !input 'light'
           data_template:
             brightness_step_pct: 20
-            transition: 0.5
+            transition: 0.1
   - conditions:
     - '{{ command == ''step_color_temp'' }}'
     - '{{ cluster_id == 768 }}'
@@ -109,4 +109,4 @@ action:
           target: !input 'light'
           data_template:
             brightness_step_pct: -20
-            transition: 0.5
+            transition: 0.1
