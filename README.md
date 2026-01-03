@@ -1,0 +1,2 @@
+# HomeAssistantBlueprints
+Blueprints for HA
