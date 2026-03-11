@@ -1,7 +1,7 @@
 blueprint:
   name: IKEA BILRESA Scroll Wheel – 3 Lichter (Thread/Matter)
   description: >
-    Steuere 3 Lichter (oder Gruppen) mit dem IKEA BILRESA Scroll Wheel (Thread).
+    Steuere bis zu 3 Lichter (oder Gruppen) mit dem IKEA BILRESA Scroll Wheel (Thread).
     Einfach das Gerät auswählen – alle 9 Entitäten werden automatisch gemappt.
 
     **Szene 1 (LED 1):** Licht 1  
@@ -12,6 +12,7 @@ blueprint:
     - Drehen rechts: Heller
     - Drehen links: Dunkler
 
+    Lichter sind optional – nicht belegte Szenen werden einfach ignoriert.
     Benötigt Home Assistant 2024.4 oder neuer.
 
   domain: automation
@@ -28,6 +29,8 @@ blueprint:
 
     light1:
       name: Licht – Szene 1 (LED 1)
+      description: Leer lassen um diese Szene zu deaktivieren
+      default: {}
       selector:
         target:
           entity:
@@ -35,6 +38,8 @@ blueprint:
 
     light2:
       name: Licht – Szene 2 (LED 2)
+      description: Leer lassen um diese Szene zu deaktivieren
+      default: {}
       selector:
         target:
           entity:
@@ -42,6 +47,8 @@ blueprint:
 
     light3:
       name: Licht – Szene 3 (LED 3)
+      description: Leer lassen um diese Szene zu deaktivieren
+      default: {}
       selector:
         target:
           entity:
@@ -59,26 +66,22 @@ blueprint:
 
     press_action_1:
       name: Szene 1 – Aktion bei Drücken (optional)
-      description: Standard ist toggle. Hier kannst du z.B. eine HA-Szene aktivieren.
-      default:
-        - action: light.toggle
-          target: !input light1
+      description: Leer lassen für toggle. Oder z.B. eine HA-Szene aktivieren.
+      default: []
       selector:
         action: {}
 
     press_action_2:
       name: Szene 2 – Aktion bei Drücken (optional)
-      default:
-        - action: light.toggle
-          target: !input light2
+      description: Leer lassen für toggle. Oder z.B. eine HA-Szene aktivieren.
+      default: []
       selector:
         action: {}
 
     press_action_3:
       name: Szene 3 – Aktion bei Drücken (optional)
-      default:
-        - action: light.toggle
-          target: !input light3
+      description: Leer lassen für toggle. Oder z.B. eine HA-Szene aktivieren.
+      default: []
       selector:
         action: {}
 
@@ -94,6 +97,12 @@ variables:
   remote: !input remote
   step: !input brightness_step
   fired: "{{ trigger.entity_id }}"
+  light1: !input light1
+  light2: !input light2
+  light3: !input light3
+  press_action_1: !input press_action_1
+  press_action_2: !input press_action_2
+  press_action_3: !input press_action_3
   tastes: "{{ device_entities(remote) | select('search', 'taste') | sort | list }}"
   e_s1_inc:   "{{ tastes[0] if tastes | length >= 9 else '' }}"
   e_s1_dec:   "{{ tastes[1] if tastes | length >= 9 else '' }}"
@@ -109,10 +118,15 @@ action:
   - choose:
 
       # ── Szene 1 ──────────────────────────────────────
-      - conditions: "{{ fired == e_s1_press }}"
-        sequence: !input press_action_1
+      - conditions: "{{ fired == e_s1_press and light1 != {} }}"
+        sequence:
+          - if: "{{ press_action_1 | length == 0 }}"
+            then:
+              - action: light.toggle
+                target: !input light1
+            else: !input press_action_1
 
-      - conditions: "{{ fired == e_s1_inc }}"
+      - conditions: "{{ fired == e_s1_inc and light1 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light1
@@ -120,7 +134,7 @@ action:
               brightness_step_pct: "{{ step | int }}"
               transition: 0.3
 
-      - conditions: "{{ fired == e_s1_dec }}"
+      - conditions: "{{ fired == e_s1_dec and light1 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light1
@@ -129,10 +143,15 @@ action:
               transition: 0.3
 
       # ── Szene 2 ──────────────────────────────────────
-      - conditions: "{{ fired == e_s2_press }}"
-        sequence: !input press_action_2
+      - conditions: "{{ fired == e_s2_press and light2 != {} }}"
+        sequence:
+          - if: "{{ press_action_2 | length == 0 }}"
+            then:
+              - action: light.toggle
+                target: !input light2
+            else: !input press_action_2
 
-      - conditions: "{{ fired == e_s2_inc }}"
+      - conditions: "{{ fired == e_s2_inc and light2 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light2
@@ -140,7 +159,7 @@ action:
               brightness_step_pct: "{{ step | int }}"
               transition: 0.3
 
-      - conditions: "{{ fired == e_s2_dec }}"
+      - conditions: "{{ fired == e_s2_dec and light2 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light2
@@ -149,10 +168,15 @@ action:
               transition: 0.3
 
       # ── Szene 3 ──────────────────────────────────────
-      - conditions: "{{ fired == e_s3_press }}"
-        sequence: !input press_action_3
+      - conditions: "{{ fired == e_s3_press and light3 != {} }}"
+        sequence:
+          - if: "{{ press_action_3 | length == 0 }}"
+            then:
+              - action: light.toggle
+                target: !input light3
+            else: !input press_action_3
 
-      - conditions: "{{ fired == e_s3_inc }}"
+      - conditions: "{{ fired == e_s3_inc and light3 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light3
@@ -160,7 +184,7 @@ action:
               brightness_step_pct: "{{ step | int }}"
               transition: 0.3
 
-      - conditions: "{{ fired == e_s3_dec }}"
+      - conditions: "{{ fired == e_s3_dec and light3 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light3
