@@ -24,7 +24,7 @@ blueprint:
         device:
           integration: matter
           manufacturer: "IKEA of Sweden"
-          model: "BILRESA scroll wheel (32768)"
+          model: "BILRESA scroll wheel"
 
     light1:
       name: Licht – Szene 1 (LED 1)
