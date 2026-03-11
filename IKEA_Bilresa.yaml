@@ -89,14 +89,13 @@ mode: restart
 max_exceeded: silent
 
 trigger:
-  - platform: state
-    entity_id: >-
-      {{ device_entities(remote) | select('search', 'taste') | sort | list }}
+  - platform: event
+    event_type: state_changed
 
 variables:
   remote: !input remote
   step: !input brightness_step
-  fired: "{{ trigger.entity_id }}"
+  fired: "{{ trigger.event.data.entity_id }}"
   light1: !input light1
   light2: !input light2
   light3: !input light3
@@ -113,6 +112,10 @@ variables:
   e_s3_inc:   "{{ tastes[6] if tastes | length >= 9 else '' }}"
   e_s3_dec:   "{{ tastes[7] if tastes | length >= 9 else '' }}"
   e_s3_press: "{{ tastes[8] if tastes | length >= 9 else '' }}"
+
+condition:
+  - condition: template
+    value_template: "{{ fired in tastes }}"
 
 action:
   - choose:
