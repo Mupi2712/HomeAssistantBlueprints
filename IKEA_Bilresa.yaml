@@ -102,22 +102,42 @@ variables:
   press_action_2: !input press_action_2
   press_action_3: !input press_action_3
   fired: "{{ trigger.event.data.entity_id }}"
-  # Taste-Nummer aus Entity-ID extrahieren (z.B. ...taste_3 → 3)
-  taste_num: "{{ fired.split('_') | last | int(0) }}"
+  # Nummer aus Entity-ID extrahieren (taste_3 → 3, schalterstellung_3 → 3)
+  fired_num: "{{ fired.split('_') | last | int(0) }}"
+  # Entitätstyp bestimmen
+  is_taste: "{{ 'taste' in fired }}"
+  is_schalter: "{{ 'schalterstellung' in fired }}"
+  # Aktion aus Nummer ableiten (1/4/7=inc, 2/5/8=dec, 3/6/9=press)
+  action_type: >
+    {% set r = fired_num % 3 %}
+    {% if r == 1 %}inc
+    {% elif r == 2 %}dec
+    {% else %}press{% endif %}
+  # Szene aus Nummer ableiten
+  scene_num: >
+    {% if fired_num in [1,2,3] %}1
+    {% elif fired_num in [4,5,6] %}2
+    {% elif fired_num in [7,8,9] %}3
+    {% else %}0{% endif %}
 
 condition:
-  # Nur reagieren wenn das Event vom BILRESA-Gerät kommt
+  # Nur vom BILRESA-Gerät
   - condition: template
     value_template: "{{ device_id(fired) == remote }}"
-  # Nur taste-Entitäten (1-9)
+  # Nur taste oder schalterstellung, Nummer 1-9
   - condition: template
-    value_template: "{{ taste_num in range(1, 10) and 'taste' in fired }}"
+    value_template: "{{ (is_taste or is_schalter) and fired_num in range(1, 10) }}"
+  # Schalterstellung nur bei Flanke 0→1 (Puls-Start), nicht 1→0
+  - condition: template
+    value_template: >
+      {{ is_taste or (is_schalter and
+         trigger.event.data.new_state.state | int(0) == 1) }}
 
 action:
   - choose:
 
-      # ── Szene 1: taste_1=increase, taste_2=decrease, taste_3=press ──
-      - conditions: "{{ taste_num == 3 and light1 != {} }}"
+      # ── Szene 1 ──────────────────────────────────────
+      - conditions: "{{ scene_num == 1 and action_type == 'press' and light1 != {} }}"
         sequence:
           - if: "{{ press_action_1 | length == 0 }}"
             then:
@@ -125,7 +145,7 @@ action:
                 target: !input light1
             else: !input press_action_1
 
-      - conditions: "{{ taste_num == 1 and light1 != {} }}"
+      - conditions: "{{ scene_num == 1 and action_type == 'inc' and light1 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light1
@@ -133,7 +153,7 @@ action:
               brightness_step_pct: "{{ step | int }}"
               transition: 0.3
 
-      - conditions: "{{ taste_num == 2 and light1 != {} }}"
+      - conditions: "{{ scene_num == 1 and action_type == 'dec' and light1 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light1
@@ -141,8 +161,8 @@ action:
               brightness_step_pct: "{{ (step | int) * -1 }}"
               transition: 0.3
 
-      # ── Szene 2: taste_4=increase, taste_5=decrease, taste_6=press ──
-      - conditions: "{{ taste_num == 6 and light2 != {} }}"
+      # ── Szene 2 ──────────────────────────────────────
+      - conditions: "{{ scene_num == 2 and action_type == 'press' and light2 != {} }}"
         sequence:
           - if: "{{ press_action_2 | length == 0 }}"
             then:
@@ -150,7 +170,7 @@ action:
                 target: !input light2
             else: !input press_action_2
 
-      - conditions: "{{ taste_num == 4 and light2 != {} }}"
+      - conditions: "{{ scene_num == 2 and action_type == 'inc' and light2 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light2
@@ -158,7 +178,7 @@ action:
               brightness_step_pct: "{{ step | int }}"
               transition: 0.3
 
-      - conditions: "{{ taste_num == 5 and light2 != {} }}"
+      - conditions: "{{ scene_num == 2 and action_type == 'dec' and light2 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light2
@@ -166,8 +186,8 @@ action:
               brightness_step_pct: "{{ (step | int) * -1 }}"
               transition: 0.3
 
-      # ── Szene 3: taste_7=increase, taste_8=decrease, taste_9=press ──
-      - conditions: "{{ taste_num == 9 and light3 != {} }}"
+      # ── Szene 3 ──────────────────────────────────────
+      - conditions: "{{ scene_num == 3 and action_type == 'press' and light3 != {} }}"
         sequence:
           - if: "{{ press_action_3 | length == 0 }}"
             then:
@@ -175,7 +195,7 @@ action:
                 target: !input light3
             else: !input press_action_3
 
-      - conditions: "{{ taste_num == 7 and light3 != {} }}"
+      - conditions: "{{ scene_num == 3 and action_type == 'inc' and light3 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light3
@@ -183,7 +203,7 @@ action:
               brightness_step_pct: "{{ step | int }}"
               transition: 0.3
 
-      - conditions: "{{ taste_num == 8 and light3 != {} }}"
+      - conditions: "{{ scene_num == 3 and action_type == 'dec' and light3 != {} }}"
         sequence:
           - action: light.turn_on
             target: !input light3
