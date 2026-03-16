@@ -1,8 +1,8 @@
 blueprint:
-  name: IKEA BILRESA Scroll Wheel – 3 Lichter (Thread/Matter)
+  name: IKEA BILRESA Scroll Wheel - 3 Lichter (Thread/Matter)
   description: >
     Steuere bis zu 3 Lichter (oder Gruppen) mit dem IKEA BILRESA Scroll Wheel (Thread).
-    Einfach das Gerät auswählen – alle 9 Entitäten werden automatisch gemappt.
+    Einfach das Gerät auswählen - alle 9 Entitäten werden automatisch gemappt.
 
     **Szene 1 (LED 1):** Licht 1  
     **Szene 2 (LED 2):** Licht 2  
@@ -12,7 +12,7 @@ blueprint:
     - Drehen rechts: Heller
     - Drehen links: Dunkler
 
-    Lichter sind optional – nicht belegte Szenen werden einfach ignoriert.
+    Lichter sind optional - nicht belegte Szenen werden einfach ignoriert.
     Benötigt Home Assistant 2024.4 oder neuer.
 
   domain: automation
@@ -28,7 +28,7 @@ blueprint:
           model: "BILRESA scroll wheel"
 
     light1:
-      name: Licht – Szene 1 (LED 1)
+      name: Licht - Szene 1 (LED 1)
       description: Leer lassen um diese Szene zu deaktivieren
       default: {}
       selector:
@@ -37,7 +37,7 @@ blueprint:
             domain: light
 
     light2:
-      name: Licht – Szene 2 (LED 2)
+      name: Licht - Szene 2 (LED 2)
       description: Leer lassen um diese Szene zu deaktivieren
       default: {}
       selector:
@@ -46,7 +46,7 @@ blueprint:
             domain: light
 
     light3:
-      name: Licht – Szene 3 (LED 3)
+      name: Licht - Szene 3 (LED 3)
       description: Leer lassen um diese Szene zu deaktivieren
       default: {}
       selector:
@@ -65,21 +65,21 @@ blueprint:
           unit_of_measurement: "%"
 
     press_action_1:
-      name: Szene 1 – Aktion bei Drücken (optional)
+      name: Szene 1 - Aktion bei Drücken (optional)
       description: Leer lassen für toggle. Oder z.B. eine HA-Szene aktivieren.
       default: []
       selector:
         action: {}
 
     press_action_2:
-      name: Szene 2 – Aktion bei Drücken (optional)
+      name: Szene 2 - Aktion bei Drücken (optional)
       description: Leer lassen für toggle. Oder z.B. eine HA-Szene aktivieren.
       default: []
       selector:
         action: {}
 
     press_action_3:
-      name: Szene 3 – Aktion bei Drücken (optional)
+      name: Szene 3 - Aktion bei Drücken (optional)
       description: Leer lassen für toggle. Oder z.B. eine HA-Szene aktivieren.
       default: []
       selector:
@@ -102,7 +102,8 @@ variables:
   press_action_2: !input press_action_2
   press_action_3: !input press_action_3
   fired: "{{ trigger.event.data.entity_id }}"
-  fired_num: "{{ fired.split('_') | last | int(0) }}"
+  fired_num: >
+    {{ (fired | regex_search('(?:taste|schalterstellung)_(\d)'))[0] | int(0) }}
   is_taste: "{{ 'taste' in fired }}"
   is_schalter: "{{ 'schalterstellung' in fired }}"
   action_type: >
