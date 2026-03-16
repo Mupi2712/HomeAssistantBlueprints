@@ -103,7 +103,11 @@ variables:
   press_action_3: !input press_action_3
   fired: "{{ trigger.event.data.entity_id }}"
   fired_num: >
-    {{ (fired | regex_search('(?:taste|schalterstellung)_(\d)'))[0] | int(0) }}
+    {% if 'taste_' in fired %}
+      {{ fired.split('taste_')[1].split('_')[0] | int(0) }}
+    {% elif 'schalterstellung_' in fired %}
+      {{ fired.split('schalterstellung_')[1].split('_')[0] | int(0) }}
+    {% else %}0{% endif %}
   is_taste: "{{ 'taste' in fired }}"
   is_schalter: "{{ 'schalterstellung' in fired }}"
   action_type: >
