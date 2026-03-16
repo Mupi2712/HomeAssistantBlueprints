@@ -102,18 +102,14 @@ variables:
   press_action_2: !input press_action_2
   press_action_3: !input press_action_3
   fired: "{{ trigger.event.data.entity_id }}"
-  # Nummer aus Entity-ID extrahieren (taste_3 → 3, schalterstellung_3 → 3)
   fired_num: "{{ fired.split('_') | last | int(0) }}"
-  # Entitätstyp bestimmen
   is_taste: "{{ 'taste' in fired }}"
   is_schalter: "{{ 'schalterstellung' in fired }}"
-  # Aktion aus Nummer ableiten (1/4/7=inc, 2/5/8=dec, 3/6/9=press)
   action_type: >
     {% set r = fired_num % 3 %}
     {% if r == 1 %}inc
     {% elif r == 2 %}dec
     {% else %}press{% endif %}
-  # Szene aus Nummer ableiten
   scene_num: >
     {% if fired_num in [1,2,3] %}1
     {% elif fired_num in [4,5,6] %}2
@@ -124,20 +120,23 @@ condition:
   # Nur vom BILRESA-Gerät
   - condition: template
     value_template: "{{ device_id(fired) == remote }}"
-  # Nur taste oder schalterstellung, Nummer 1-9
+  # Nummer muss 1-9 sein
   - condition: template
-    value_template: "{{ (is_taste or is_schalter) and fired_num in range(1, 10) }}"
-  # Schalterstellung nur bei Flanke 0→1 (Puls-Start), nicht 1→0
+    value_template: "{{ fired_num in range(1, 10) }}"
+  # taste = immer erlaubt (press)
+  # schalterstellung = nur inc/dec, nur bei fallender Flanke (1→0)
   - condition: template
     value_template: >
-      {{ is_taste or (is_schalter and
-         trigger.event.data.new_state.state | int(0) == 1) }}
+      {{ is_taste or
+         (is_schalter and action_type != 'press' and
+          trigger.event.data.new_state.state | int(0) == 0 and
+          trigger.event.data.old_state.state | int(0) == 1) }}
 
 action:
   - choose:
 
       # ── Szene 1 ──────────────────────────────────────
-      - conditions: "{{ scene_num == 1 and action_type == 'press' and light1 != {} }}"
+      - conditions: "{{ scene_num == 1 and action_type == 'press' and is_taste and light1 != {} }}"
         sequence:
           - if: "{{ press_action_1 | length == 0 }}"
             then:
@@ -162,7 +161,7 @@ action:
               transition: 0.3
 
       # ── Szene 2 ──────────────────────────────────────
-      - conditions: "{{ scene_num == 2 and action_type == 'press' and light2 != {} }}"
+      - conditions: "{{ scene_num == 2 and action_type == 'press' and is_taste and light2 != {} }}"
         sequence:
           - if: "{{ press_action_2 | length == 0 }}"
             then:
@@ -187,7 +186,7 @@ action:
               transition: 0.3
 
       # ── Szene 3 ──────────────────────────────────────
-      - conditions: "{{ scene_num == 3 and action_type == 'press' and light3 != {} }}"
+      - conditions: "{{ scene_num == 3 and action_type == 'press' and is_taste and light3 != {} }}"
         sequence:
           - if: "{{ press_action_3 | length == 0 }}"
             then:
